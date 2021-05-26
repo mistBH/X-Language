@@ -1,0 +1,324 @@
+grammar XLanguage;
+
+stored_definition  ::= ['within' name ';'] {['final'] class_definition}
+    
+class_definition  ::= ('encapsuate')?  class_prefixes class_specifier
+
+
+class_prefixes ::= ['partial'] ('class'|'continuous'|'discrete'|'agent'|'couple'|'connector'|'enum'|'record'|'function') 
+
+class_specifier ::= (IDENT  definition_section  {composition} 'end')| enumeration_definition
+
+enumeration_definition ::= IDENT'{'enum_list'}'
+
+composition ::= connection_section | stm_section | par_section  | act_section 
+
+definition_section ::={(import_clause 
+    | extends_clause 
+    | class_definition
+    | parameter_component_clause)';'}
+
+    {port_section
+    |part_section
+    |value_section
+    |plan_definition} 
+    
+    
+
+part_section ::= 'part:'{component_clause';'}
+    
+value_section ::= 'value:'{component_clause';'}
+
+port_section ::= 'port:'{port_component_clause}
+
+port_component_clause
+    : (port_prefix)?  type_specifier  component_list';'
+
+port_prefix  ::= 'input' |'output'|'event''input' |'event''output'
+    
+plan_definition ::= 'plan' IDENT definition_section act_section 'end'';'
+
+connection_section ::= 'connection:'{connect_clause';'}
+    
+stm_section ::= 'state:' {state_definition}
+    
+par_section ::= 'equation:' {equation ';'} 
+   
+act_section ::= 'action:' {statement';'}
+
+state_definition ::= 'initial' 'state' IDENT  (state_statement)*  'end'';'      
+    | 'state' IDENT  (state_statement)*  'end'';'                                                         
+    | 'state' IDENT  catch_clause  ((when_receive_clause';')|(when_statement';'))* 'end'';'                
+    
+state_statement ::= (when_entry_clause
+    | when_receive_clause
+    | when_goto_out_clause)';'
+
+
+enum_list ::= IDENT { ',' IDENT }
+    
+
+
+component_list ::= component_declaration {','component_declaration}
+
+component_declaration ::= IDENT [array_subscripts] [modification]
+
+modification ::= class_modification
+    | '=' initializer
+
+initializer ::=  array_literal   
+    | expression             
+
+class_modification  ::= '(' [argument_list] ')' 
+    
+argument_list ::= argument {',' argument}
+    
+argument ::= (name  [modification])|expression
+
+import_clause ::= 'import' (IDENT '=' name | name ('.' ( '*' | '{' import_list '}' ) )? )
+
+import_list ::= IDENT {',' IDENT}
+
+extends_clause ::= 'extends' type_specifier [class_modification]
+
+component_clause ::=['replaceable'] type_prefix type_specifier component_list 
+    
+parameter_component_clause ::= 'parameter' type_specifier component_list
+    
+type_prefix ::= ['flow'] [is_discrete | is_constant]
+    
+is_discrete ::= 'discrete'
+
+is_constant ::= 'constant'
+
+
+receive_clause ::= 'receive('component_reference')'
+    | 'receive('expression{','expression}')'
+    
+send_clause ::= 'send''('[component_reference ','expression]')'
+    |'send''('component_reference','component_reference')'
+    
+timeover_clouse ::= 'timeover''('')'
+    
+connect_clause ::= 'connect' '(' component_reference ',' component_reference ')' 
+
+equation ::= simple_equation      
+    | if_equation     
+    | for_equation   
+    | when_receive_equation  
+    | when_equation  
+
+
+simple_equation ::= expression '=' expression
+    
+if_equation ::= 'if' expression 'then'   {equation ';' }  {elseif_equation}  [else_equation] 'end'
+    
+elseif_equation ::= 'elseif' expression 'then'   {equation ';' } 
+    
+else_equation ::= 'else' {equation ';' }
+    
+for_equation ::= 'for' for_index 'loop'  {equation ';' }   'end'
+    
+for_index ::= IDENT ['in' expression ] 
+    
+when_equation ::= 'when' expression 'then'    {equation ';' }   [out_with_equation] {elsewhen_equation} 'end'
+    
+out_with_equation ::= 'out' {equation ';'}
+
+elsewhen_equation ::= 'elsewhen' expression 'then'   {equation ';'}
+    [out_with_equation]
+    
+when_receive_equation ::= 'when' receive_clause 'then'{equation ';'}
+    [out_with_equation]
+    'end'  
+
+statement ::= send_clause
+    | simple_statement
+    | function_call 
+    | break_statement
+    | continue_statement
+    | return_statement
+    | if_statement     
+    | for_statement   
+    | while_statement     
+    | when_statement 
+    | statehold_clause
+    | run_statement
+    | agentover_statement
+    | transition_clause
+    
+simple_statement ::= component_reference '=' expression 
+    | '('output_expression_list')' '=' function_call
+    
+break_statement ::= 'break'
+    
+continue_statement ::= 'continue'
+    
+run_statement ::= 'run''('component_reference {','component_reference}')'
+    
+agentover_statement ::= 'agentover'
+    
+return_statement ::= 'return'
+    
+if_statement  ::= 'if' expression 'then' {statement ';'} {elseif_statement}  [else_statement]   'end'
+    
+elseif_statement ::= 'elseif' expression 'then'  {statement ';'}
+    
+else_statement ::= 'else'{statement ';'}
+    
+for_statement ::= 'for' for_index 'loop'   {statement ';'}   'end'
+    
+while_statement ::= 'while' expression 'loop'    {statement ';'}   'end'
+    
+when_statement ::= 'when' expression 'then'  {statement ';'}  {elsewhen_statement}   'end'
+    
+elsewhen_statement ::= 'elsewhen' expression 'then' {statement ';'}
+    
+transition_clause ::= 'transition' '('IDENT')'
+    
+statehold_clause ::= 'statehold' '('expression')'
+    
+when_goto_out_clause ::= 'when'timeover_clouse'then'
+      {statement ';'}
+      [out_with_satement] 
+      'end'
+    
+out_with_satement ::= 'out' (statement ';')*
+    
+when_receive_clause ::= 'when' receive_clause 'then'{statement ';'}  
+     [out_with_satement]
+     'end'
+    
+when_entry_clause ::= 'when''entry' 'then' statehold_clause ';' {statement';'} 'end'
+    
+catch_clause ::=
+      'catch'  {simple_statement';'}
+      'equation' {equation';'} 'end'';'
+
+expression ::= logical_expression 
+    |colon_literal
+    |receive_clause
+    
+colon_literal ::=  logical_expression ':' logical_expression
+    | logical_expression ':' logical_expression ':' logical_expression
+    
+logical_expression ::= logical_term ['or' logical_expression]
+    
+logical_term ::= logical_factor('and' logical_term)?
+    
+logical_factor ::= ['not'] relation 
+
+relation ::= arithmetic_expression [relational_operator arithmetic_expression]
+    
+relational_operator ::=  '<'| '<=' | '>' | '>=' | '==' |'!='
+    
+arithmetic_expression ::= add_operator arithmetic_expression 
+    | term [add_operator arithmetic_expression]
+    
+add_operator ::= '+' |'-'| '.+' | '.-' 
+
+term ::= factor [mul_operator term]
+
+mul_operator ::= '*' | '/' | '.*' | './' 
+
+factor::= primary [index_operator primary]
+
+index_operator ::='^' | '.^'
+
+primary ::= bracket_exp
+    | interger_literal
+    | real_literal
+    | bool_literal
+    | string_literal
+    | list_literal
+    | map_literal
+    | component_reference  
+    | component_inistant
+    | function_call
+    | '(' output_expression_list ')'
+    | array_literal
+    | infinite_clause  
+    
+bracket_exp ::='('expression')'
+
+name  ::=  IDENT {'.' IDENT}
+    
+infinite_clause ::= 'infinite'
+    
+type_specifier ::= ['.'] name 
+    |list_type
+    |map_type
+    
+list_type ::= 'list<'type_specifier'>'
+    
+map_type ::= 'map<'type_specifier','type_specifier'>'
+    
+array_literal ::='[' array_arguments ']' 
+    
+string_literal ::= STRING
+
+real_literal ::= UNSIGNED_NUMBER | NUMBER
+    
+interger_literal ::= UNSIGNED_INTEGER
+    
+bool_literal ::='true'|'false'
+    
+list_literal ::= empty_args|('{'list_args'}')
+    
+list_args ::= expression(','expression)*
+    
+map_literal ::= empty_args|('{'map_args{','map_args}'}')
+    
+map_args ::= '{'expression':'expression'}'
+    
+empty_args ::='{''}'
+    
+function_call ::= (component_reference | 'der'|'pre' ) function_call_args 
+
+component_reference ::= ['.']  component_reference_args
+    
+component_reference_args ::= IDENT [array_subscripts]['.'component_reference_args]
+
+function_call_args  ::= '(' [function_arguments] ')' 
+
+function_arguments ::=  expression {',' expression} 
+    | named_arguments 
+    
+array_arguments ::= expression {',' expression}
+    
+named_arguments ::=  named_argument {',' named_argument}
+    
+named_argument ::= IDENT '=' expression 
+
+output_expression_list ::= [expression] {',' (expression)? }
+
+array_subscripts ::= '[' subscript {',' subscript} ']' 
+
+subscript ::= select_all | expression 
+    
+select_all ::= ':'
+
+
+IDENT ::=  NONDIGIT { DIGIT|NONDIGIT}
+
+NONDIGIT ::= 'a'..'z'|'A'..'Z'|'_'
+
+UNSIGNED_INTEGER ::= DIGIT {DIGIT}
+
+
+UNSIGNED_NUMBER ::= UNSIGNED_INTEGER EXP  | UNSIGNED_INTEGER '.' DIGIT {DIGIT} EXP?                
+
+NUMBER ::= UNSIGNED_INTEGER EXP            
+    |  UNSIGNED_INTEGER '.' DIGIT{DIGIT} EXP?                
+    ;
+
+DIGIT ::= '0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9'
+
+EXP ::= ('E' | 'e') ['+' | '-'] UNSIGNED_INTEGER ; 
+
+STRING ::= '"' {EscapeSequence | ~('\\'|'"') } '"'
+EscapeSequence ::= '\\' ('b'|'t'|'n'|'f'|'r'|'\"'|'\''|'\\')
+    
+COMMENT ::=  '/*' .*? '*/' 
+    
+COMMENT1 ::=  '//' .*?  '\n'
