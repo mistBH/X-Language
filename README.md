@@ -1,5 +1,5 @@
 # X-Language
-X language is a complex system modeling language developed by Beihang University
+X language is an integrated modeling and simulation language developed by Beihang University
 
 # XLab
 The XLab software is responsible for interpreting the models built from the X language into C ++.You can directly download the software and install it under the 64-bit Win10 system
